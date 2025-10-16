@@ -16,7 +16,6 @@ anthropic==0.7.5
 pinecone-client==3.0.0
 
 # Audio
-elevenlabs==1.6.1
 python-multipart==0.0.6
 
 # Task Queue
@@ -39,3 +38,7 @@ mypy==1.7.0
 
 # Logging
 python-json-logger==2.0.7
+
+#Test-to-Speech
+gTTS==2.5.1
+elevenlabs==1.6.1
