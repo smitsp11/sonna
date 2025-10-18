@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "your-secret-key-here"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
-    USE_OPENAI_WHISPER: bool = False
     OPENROUTER_API_KEY: str | None = None
     GEMINI_API_KEY: str | None = None
     # CORS
@@ -34,11 +33,7 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str = "your-pinecone-api-key"
     PINECONE_ENVIRONMENT: str = "us-west1-gcp"
     PINECONE_INDEX_NAME: str = "sonna-memories"
-    
-    # OpenAI/Anthropic
-    OPENAI_API_KEY: str = "your-openai-api-key"
-    ANTHROPIC_API_KEY: str = "your-anthropic-api-key"
-    
+        
     # ElevenLabs
     ELEVENLABS_API_KEY: str = "your-elevenlabs-api-key"
     DEFAULT_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel
