@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-here"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     USE_OPENAI_WHISPER: bool = False
-    
+    OPENROUTER_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = ["*"]
     
@@ -48,6 +49,7 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
+        env_file_encoding = "utf-8"
         
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:

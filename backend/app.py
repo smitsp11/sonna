@@ -7,8 +7,9 @@ and sets up middleware and event handlers.
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import voice, tasks, memory, tts
+from .routers import conversation, voice, tasks, memory, tts
 from .config import settings
+from backend.routers import conversation
 
 app = FastAPI(
     title="Sonna API",
@@ -30,6 +31,7 @@ app.include_router(voice.router, prefix="/api/voice", tags=["voice"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 app.include_router(tts.router, prefix="/api/tts", tags=["tts"])
+app.include_router(conversation.router, prefix="/conversation", tags=["Conversation"])
 
 @app.get("/")
 async def root():
