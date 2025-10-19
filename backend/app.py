@@ -3,6 +3,7 @@ Main FastAPI application for Sonna backend.
 
 This module initializes the FastAPI app, includes all routers,
 and sets up middleware and event handlers.
+testing
 """
 
 from fastapi import FastAPI
