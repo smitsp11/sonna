@@ -1,0 +1,58 @@
+# Sonna Backend Installation Guide
+
+This document explains how to set up and run the Sonna backend from scratch.
+
+---
+
+# 1. Prerequisites
+
+Make sure you have the following installed:
+- Python 3.10 or newer (recommended: 3.11)
+- Git
+- PostgreSQL or a Supabase database
+- (Optional) Redis, if you plan to use Celery for background jobs
+
+---
+
+# 2. Clone the Repository
+
+git clone https://github.com/your-username/sonna.git  
+cd sonna/backend
+
+---
+
+# 3. Create a Virtual Environment
+
+python -m venv .venv  
+source .venv/bin/activate   # macOS/Linux  
+# OR  
+.venv\Scripts\activate      # Windows
+
+---
+
+# 4. Upgrade Pip
+
+pip install --upgrade pip
+
+---
+
+# 5. Install Dependencies
+
+pip install -r requirements.txt
+
+---
+
+# 7. Run the Application
+
+From the root folder of the project:
+
+uvicorn backend.app:app --reload
+
+Expected output:
+INFO:     Uvicorn running on http://127.0.0.1:8000  
+INFO:     Application startup complete.  
+INFO:     Faster-Whisper model initialized successfully.  
+INFO:     Initialized Gemini LLM agent with model: gemini-pro  
+
+You can now visit:  
+http://127.0.0.1:8000/docs

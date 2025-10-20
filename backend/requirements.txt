@@ -4,7 +4,8 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-dotenv==1.0.0
-pydantic[email]>=2.8.0
+pydantic[email]>=2.12.3
+pydantic-settings>=2.1.0
 python-multipart==0.0.6
 
 # =========================
@@ -17,9 +18,9 @@ sqlalchemy[asyncio]==2.0.23
 # =========================
 # 🤖 AI / ML Integrations
 # =========================
-# Removed: anthropic==0.7.5
-# Gemini handled via Google SDK or REST API (no local pip dependency)
+google-generativeai>=0.8.5
 pinecone-client==3.0.0
+faster-whisper>=1.0.0
 
 # =========================
 # 🔊 Audio & Voice
