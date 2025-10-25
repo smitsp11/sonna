@@ -1,8 +1,8 @@
-echo "venv/
+venv/
 __pycache__
-.env
+/env
 .DS_Store
 .venv
 *.pyc
-*.log" > .gitignore
-
+*.log
+*.m4a
