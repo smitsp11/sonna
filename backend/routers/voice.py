@@ -52,11 +52,18 @@ async def transcribe_audio(
         # --- Save input audio to a temp file ---
         if isinstance(audio, UploadFile):
             content_type = audio.content_type
-            if content_type not in allowed:
-                raise HTTPException(
-                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail=f"Unsupported file type. Allowed: {', '.join(sorted(allowed))}"
-                )
+            
+            # Flexible audio file type handling
+            if content_type and not any(allowed_type in content_type for allowed_type in allowed):
+                
+                if audio.filename:
+                    ext = Path(audio.filename).suffix.lower()
+                    if ext in ['.m4a', '.mp3', '.wav', '.mp4', '.webm']:
+                        logger.warning(f"Accepting file with type {content_type} based on extension {ext}")
+                        content_type = "audio/x-m4a"
+                else:
+                    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=f"Unsupported file type. Allowed: {', '.join(sorted(allowed))}")
+
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=Path(audio.filename).suffix) as tmp:
                 data = await audio.read()
