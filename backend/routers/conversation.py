@@ -53,7 +53,7 @@ def generate_gemini_response(user_text: str) -> str:
         return generate_default_response()
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         chat = model.start_chat(history=[])
         response = chat.send_message(
             f"You are Sonna, an intelligent and caring AI voice assistant. "
