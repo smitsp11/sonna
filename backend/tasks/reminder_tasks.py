@@ -271,16 +271,17 @@ def cleanup_old_reminders():
 
 
 @celery_app.task
-def send_reminder_notification(reminder_id: int, notification_type: str = "default"):
+def send_reminder_notification(reminder_id: int, notification_type: str = "desktop"):
     """
     Send a notification for a reminder.
     
-    This is a placeholder for notification logic that can be
-    extended to support different notification channels.
+    Supports multiple notification channels:
+    - Desktop notifications (default)
+    - Can be extended for email, SMS, push, etc.
     
     Args:
         reminder_id: ID of the reminder
-        notification_type: Type of notification to send
+        notification_type: Type of notification to send (desktop, email, sms, etc.)
     """
     db = SessionLocal()
     try:
@@ -290,28 +291,45 @@ def send_reminder_notification(reminder_id: int, notification_type: str = "defau
             logger.error(f"Reminder {reminder_id} not found for notification")
             return
         
-        # TODO: Implement actual notification logic
-        # This could include:
-        # - Webhook notifications
-        # - Email notifications
-        # - Push notifications
-        # - SMS notifications
-        # - Slack/Discord notifications
-        
         logger.info(f"📱 Sending {notification_type} notification for reminder: {reminder.content}")
         
-        # For now, just log the notification
-        notification_data = {
-            "reminder_id": reminder_id,
-            "content": reminder.content,
-            "scheduled_time": reminder.scheduled_time.isoformat(),
-            "notification_type": notification_type,
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        # Send notification (multiple methods)
+        if notification_type == "desktop":
+            # Method 1: Console logging (always works)
+            logger.info("🔔" + "="*50)
+            logger.info(f"🔔 REMINDER: {reminder.content}")
+            logger.info(f"🔔 Scheduled: {reminder.scheduled_time.strftime('%A, %B %d at %I:%M %p')}")
+            logger.info("🔔" + "="*50)
+            
+            # Method 2: Try desktop notification
+            try:
+                from ..services.notification_service import send_reminder_notification as send_desktop
+                scheduled_time_str = reminder.scheduled_time.strftime("%A, %B %d at %I:%M %p")
+                result = send_desktop(
+                    reminder_content=reminder.content,
+                    scheduled_time=scheduled_time_str
+                )
+                if result["success"]:
+                    logger.info(f"✅ Desktop notification sent successfully for reminder {reminder_id}")
+                else:
+                    logger.warning(f"⚠️ Desktop notification failed for reminder {reminder_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Desktop notification error: {e}")
+            
+            return {"status": "sent", "method": "console_logging"}
         
-        logger.info(f"Notification data: {notification_data}")
+        # Future: Add other notification types here
+        # elif notification_type == "email":
+        #     send_email_notification(reminder)
+        # elif notification_type == "sms":
+        #     send_sms_notification(reminder)
+        
+        else:
+            logger.warning(f"Unknown notification type: {notification_type}")
+            return {"status": "failed", "error": "Unknown notification type"}
         
     except Exception as e:
         logger.error(f"Failed to send notification for reminder {reminder_id}: {e}")
+        return {"status": "failed", "error": str(e)}
     finally:
         db.close()

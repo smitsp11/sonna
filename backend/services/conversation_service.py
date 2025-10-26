@@ -178,3 +178,88 @@ def generate_conversation_title(db: Session, conversation_id: int, first_message
         
         conversation.title = title
         db.commit()
+
+
+def search_conversations(
+    db: Session,
+    user_id: int,
+    query: str,
+    limit: int = 5
+) -> List[Dict[str, Any]]:
+    """
+    Search past conversations for specific topics or keywords.
+    
+    Uses case-insensitive text search to find messages containing the query.
+    Returns conversations with matching messages, including context snippets.
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        query: Search query string
+        limit: Maximum number of results to return
+        
+    Returns:
+        List of dictionaries with conversation info and matching message snippets
+    """
+    # Search for messages containing the query (case-insensitive)
+    search_pattern = f"%{query}%"
+    
+    matching_messages = (
+        db.query(Message, Conversation)
+        .join(Conversation, Message.conversation_id == Conversation.id)
+        .filter(
+            Conversation.user_id == user_id,
+            Message.content.ilike(search_pattern)
+        )
+        .order_by(desc(Message.created_at))
+        .limit(limit * 2)  # Get more than needed to group by conversation
+        .all()
+    )
+    
+    if not matching_messages:
+        return []
+    
+    # Group results by conversation and format
+    results = []
+    seen_conversations = set()
+    
+    for message, conversation in matching_messages:
+        if conversation.id in seen_conversations:
+            continue
+            
+        if len(results) >= limit:
+            break
+            
+        seen_conversations.add(conversation.id)
+        
+        # Extract snippet with context (50 chars before and after match)
+        content_lower = message.content.lower()
+        query_lower = query.lower()
+        match_pos = content_lower.find(query_lower)
+        
+        if match_pos != -1:
+            start = max(0, match_pos - 50)
+            end = min(len(message.content), match_pos + len(query) + 50)
+            snippet = message.content[start:end]
+            
+            # Add ellipsis if truncated
+            if start > 0:
+                snippet = "..." + snippet
+            if end < len(message.content):
+                snippet = snippet + "..."
+        else:
+            # Fallback: just use first 100 chars
+            snippet = message.content[:100]
+            if len(message.content) > 100:
+                snippet += "..."
+        
+        results.append({
+            "conversation_id": conversation.id,
+            "conversation_title": conversation.title,
+            "message_role": message.role,
+            "message_snippet": snippet,
+            "message_date": message.created_at.strftime("%A, %B %d at %I:%M %p"),
+            "full_message": message.content
+        })
+    
+    return results

@@ -231,8 +231,27 @@ def get_reminder_functions():
         )
     )
     
+    search_conversations = genai.protos.FunctionDeclaration(
+        name="search_conversations",
+        description="Search past conversations for specific topics, keywords, or information the user mentioned before",
+        parameters=genai.protos.Schema(
+            type=genai.protos.Type.OBJECT,
+            properties={
+                "query": genai.protos.Schema(
+                    type=genai.protos.Type.STRING,
+                    description="The search query or topic to look for in past conversations"
+                ),
+                "limit": genai.protos.Schema(
+                    type=genai.protos.Type.INTEGER,
+                    description="Maximum number of results to return (default: 5)"
+                )
+            },
+            required=["query"]
+        )
+    )
+    
     return genai.protos.Tool(
-        function_declarations=[create_reminder, list_reminders, cancel_reminder]
+        function_declarations=[create_reminder, list_reminders, cancel_reminder, search_conversations]
     )
 
 
@@ -360,6 +379,51 @@ def execute_function_call(function_name: str, arguments: dict, db: Session) -> d
                     "error": "Reminder not found or cannot be cancelled"
                 }
         
+        elif function_name == "search_conversations":
+            from ..services.conversation_service import search_conversations
+            
+            query = arguments.get("query", "")
+            limit = arguments.get("limit", 5)
+            
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Search query is required"
+                }
+            
+            results = search_conversations(
+                db=db,
+                user_id=user.id,
+                query=query,
+                limit=limit
+            )
+            
+            if results:
+                # Format results for natural language response
+                formatted_results = []
+                for r in results:
+                    formatted_results.append({
+                        "date": r["message_date"],
+                        "snippet": r["message_snippet"],
+                        "role": r["message_role"]
+                    })
+                
+                return {
+                    "success": True,
+                    "query": query,
+                    "results": formatted_results,
+                    "count": len(results),
+                    "message": f"Found {len(results)} conversation(s) mentioning '{query}'"
+                }
+            else:
+                return {
+                    "success": True,
+                    "query": query,
+                    "results": [],
+                    "count": 0,
+                    "message": f"No conversations found mentioning '{query}'"
+                }
+        
         else:
             return {
                 "success": False,
@@ -418,6 +482,12 @@ CRITICAL INSTRUCTIONS FOR REMINDERS:
 - DO NOT just acknowledge or say you'll create a reminder - you MUST actually call the function
 - Extract the reminder content and time expression, then call create_reminder immediately
 - After calling the function successfully, give a brief natural confirmation
+
+CONVERSATION SEARCH INSTRUCTIONS:
+- When the user asks about past conversations, use the search_conversations function
+- Examples: "What did we talk about yesterday?", "Did I mention anything about X?", "What did I say about Y?"
+- Call search_conversations with the relevant query extracted from the user's question
+- Present search results naturally, mentioning when the conversation happened and what was said
 
 General Instructions:
 - Use the EXACT date and time provided above when answering date/time questions
