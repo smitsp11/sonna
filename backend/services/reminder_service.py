@@ -102,10 +102,15 @@ def create_reminder_from_text(
     
     # Schedule the reminder task
     try:
-        schedule_reminder.delay(reminder.id, scheduled_time)
-        logger.info(f"📅 Scheduled Celery task for reminder {reminder.id}")
+        from ..tasks.reminder_tasks import schedule_reminder
+        # Convert datetime to ISO string for JSON serialization
+        scheduled_time_iso = scheduled_time.isoformat()
+        schedule_reminder.delay(reminder.id, scheduled_time_iso)
+        logger.info(f"📅 Scheduled Celery task for reminder {reminder.id} at {scheduled_time_iso}")
     except Exception as e:
         logger.error(f"❌ Failed to schedule Celery task: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
     
     return reminder
 
@@ -147,9 +152,14 @@ def create_reminder(
     
     # Schedule the reminder
     try:
-        schedule_reminder.delay(reminder.id, scheduled_time)
+        from ..tasks.reminder_tasks import schedule_reminder
+        # Convert datetime to ISO string for JSON serialization
+        scheduled_time_iso = scheduled_time.isoformat()
+        schedule_reminder.delay(reminder.id, scheduled_time_iso)
     except Exception as e:
         logger.error(f"Failed to schedule reminder: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
     
     return reminder
 

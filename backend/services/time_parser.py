@@ -38,6 +38,13 @@ def parse_time_expression(
         Parsed datetime object or None if parsing fails
     """
     try:
+        # Check if dateparser is available
+        try:
+            import dateparser
+        except ImportError:
+            logger.error("dateparser module not installed. Install with: pip install dateparser")
+            return None
+        
         tz = pytz.timezone(timezone)
         
         # Use current time as base if not provided
@@ -59,6 +66,12 @@ def parse_time_expression(
             logger.warning(f"Failed to parse time expression: '{time_string}'")
             return None
         
+        # Convert to the correct timezone if needed
+        if parsed.tzinfo is None:
+            parsed = tz.localize(parsed)
+        elif parsed.tzinfo != tz:
+            parsed = parsed.astimezone(tz)
+        
         # If parsed time is in the past, try adding a day
         if parsed < relative_base:
             logger.info(f"Parsed time {parsed} is in past, trying tomorrow")
@@ -72,6 +85,9 @@ def parse_time_expression(
                     'PREFER_DATES_FROM': 'future'
                 }
             )
+            
+            if parsed and parsed.tzinfo is None:
+                parsed = tz.localize(parsed)
         
         logger.info(f"✅ Parsed '{time_string}' → {parsed}")
         return parsed
@@ -100,7 +116,7 @@ def extract_time_from_text(text: str, timezone: str = "America/Toronto") -> Opti
     time_triggers = [
         "at", "in", "on", "tomorrow", "today", "tonight",
         "next", "this", "every", "morning", "afternoon",
-        "evening", "night", "am", "pm"
+        "evening", "night", "am", "pm", "hour", "minute"
     ]
     
     # Check if text contains time-related words
@@ -118,15 +134,28 @@ def extract_time_from_text(text: str, timezone: str = "America/Toronto") -> Opti
         return result
     
     # Try extracting just the time portion
-    # Look for phrases after "at", "in", "on"
-    for trigger in ["at", "in", "on"]:
+    # Look for phrases after "at", "in", "on", "for"
+    for trigger in [" at ", " in ", " on ", " for "]:
         if trigger in text_lower:
             parts = text_lower.split(trigger, 1)
             if len(parts) > 1:
                 time_part = parts[1].strip()
+                # Remove trailing "to do X" parts
+                for stop_word in [" to ", " and ", " then "]:
+                    if stop_word in time_part:
+                        time_part = time_part.split(stop_word)[0].strip()
+                
                 result = parse_time_expression(time_part, timezone)
                 if result:
                     return result
+    
+    # Try parsing without common prefixes
+    for prefix in ["remind me to ", "remind me ", "set a reminder to ", "set reminder to ", "set a reminder for ", "set reminder for "]:
+        if text_lower.startswith(prefix):
+            clean_text = text_lower[len(prefix):]
+            result = parse_time_expression(clean_text, timezone)
+            if result:
+                return result
     
     return None
 

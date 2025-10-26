@@ -1,8 +1,85 @@
+# Python
 venv/
-__pycache__
-.env
-.DS_Store
-.venv
+.venv/
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
 *.log
+logs/
+
+# Audio files (temporary/test files)
 *.m4a
+*.wav
+*.mp3
+*.ogg
+*.flac
+
+# Test files
+test_*.py
+*_test.py
+run_tests.py
+debug_*.py
+setup_testing.sh
+
+# Documentation (temporary/generated)
+TESTING_GUIDE.md
+QUICK_START.md
+REMINDER_FEATURE_COMPLETE.md
+BUG_FIX_SUMMARY.md
+HOW_TO_TEST.md
+
+# Celery
+celerybeat-schedule*
+celery-*.pid
+
+# Redis
+dump.rdb
+*.rdb
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage
+.coverage
+htmlcov/
+*.cover
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json

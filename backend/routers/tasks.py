@@ -300,3 +300,80 @@ async def get_reminder_detail(
     except Exception as e:
         logger.error(f"Failed to get reminder detail: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ReminderUpdate(BaseModel):
+    """Schema for updating a reminder."""
+    content: Optional[str] = None
+    scheduled_time: Optional[datetime] = None
+    recurring: Optional[bool] = None
+    recurrence_pattern: Optional[str] = None
+
+
+@router.put("/reminders/{reminder_id}")
+async def update_reminder(
+    reminder_id: int,
+    update_data: ReminderUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update an existing reminder."""
+    try:
+        user = get_or_create_default_user(db)
+        
+        reminder = (
+            db.query(Reminder)
+            .filter(
+                Reminder.id == reminder_id,
+                Reminder.user_id == user.id
+            )
+            .first()
+        )
+        
+        if not reminder:
+            raise HTTPException(status_code=404, detail="Reminder not found")
+        
+        # Only allow updating pending reminders
+        if reminder.status != TaskStatus.PENDING.value:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot update reminder with status: {reminder.status}"
+            )
+        
+        # Update fields
+        if update_data.content is not None:
+            reminder.content = update_data.content
+        
+        if update_data.scheduled_time is not None:
+            reminder.scheduled_time = update_data.scheduled_time
+            # Reschedule the Celery task
+            try:
+                from ..tasks.reminder_tasks import schedule_reminder
+                schedule_reminder.delay(reminder.id, update_data.scheduled_time)
+                logger.info(f"📅 Rescheduled reminder {reminder.id}")
+            except Exception as e:
+                logger.error(f"Failed to reschedule reminder: {e}")
+        
+        if update_data.recurring is not None:
+            reminder.recurring = update_data.recurring
+        
+        if update_data.recurrence_pattern is not None:
+            reminder.recurrence_pattern = update_data.recurrence_pattern
+        
+        db.commit()
+        db.refresh(reminder)
+        
+        return {
+            "id": reminder.id,
+            "content": reminder.content,
+            "scheduled_time": reminder.scheduled_time,
+            "status": reminder.status,
+            "recurring": reminder.recurring,
+            "recurrence_pattern": reminder.recurrence_pattern,
+            "message": f"Reminder {reminder_id} updated successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update reminder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

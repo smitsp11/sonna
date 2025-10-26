@@ -42,7 +42,35 @@ pip install -r requirements.txt
 
 ---
 
-# 7. Run the Application
+# 6. Configure Environment Variables
+
+Copy the example environment file and fill in your API keys:
+
+cp .env.example .env
+
+Then edit `.env` and add your actual API keys:
+- **GEMINI_API_KEY**: Get from https://makersuite.google.com/app/apikey
+- **DATABASE_URL**: Your PostgreSQL or Supabase connection string
+- **PINECONE_API_KEY**: Get from https://www.pinecone.io/ (for memory features)
+- **ELEVENLABS_API_KEY**: Get from https://elevenlabs.io/ (for voice synthesis)
+- **REDIS_URL**: Redis connection (default: redis://localhost:6379/0)
+
+---
+
+# 7. Start Required Services
+
+## Start Redis (for Celery)
+redis-server
+
+## Start Celery Worker (for reminders)
+celery -A backend.tasks.reminder_tasks worker --loglevel=info
+
+## Start Celery Beat (for periodic tasks)
+celery -A backend.tasks.reminder_tasks beat --loglevel=info
+
+---
+
+# 8. Run the Application
 
 From the root folder of the project:
 

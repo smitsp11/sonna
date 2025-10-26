@@ -9,8 +9,9 @@ and placeholder embeddings until vector API integration.
 
 from typing import Dict, Any, Optional
 import logging
-import os
 import httpx
+import google.generativeai as genai
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +27,15 @@ class LLMAgent:
             model_name: Name of the Gemini model to use.
         """
         self.model_name = model_name
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = settings.GEMINI_API_KEY
         self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
-        logger.info(f"Initialized Gemini LLM agent with model: {model_name}")
+        
+        # Configure genai with API key if available
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            logger.info(f"✅ Initialized Gemini LLM agent with model: {model_name}")
+        else:
+            logger.warning("⚠️ GEMINI_API_KEY not set in settings")
 
     async def process_input(
         self,
@@ -85,8 +92,7 @@ class LLMAgent:
 
     async def generate_embedding(self, text: str) -> list[float]:
         """
-        Generate a vector embedding for the given text.
-        (Currently a placeholder until embedding model integration.)
+        Generate a vector embedding for the given text using Gemini.
 
         Args:
             text: Input text to embed
@@ -94,9 +100,26 @@ class LLMAgent:
         Returns:
             List of floats representing the embedding
         """
-        # TODO: Replace with Gemini text-embedding model (when available)
-        logger.debug("Generating placeholder embedding for text.")
-        return [0.0] * 768  # dummy fixed-length embedding
+        if not self.api_key:
+            logger.warning("GEMINI_API_KEY not set; returning placeholder embedding.")
+            return [0.0] * 768  # placeholder embedding
+        
+        try:
+            # Use Gemini's embedding model
+            result = genai.embed_content(
+                model="models/embedding-001",
+                content=text,
+                task_type="retrieval_document"
+            )
+            
+            embedding = result['embedding']
+            logger.debug(f"Generated embedding of length {len(embedding)}")
+            return embedding
+            
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            # Return placeholder embedding on failure
+            return [0.0] * 768
 
 
 # Singleton instance for reuse across app
