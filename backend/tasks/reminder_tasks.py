@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 import logging
 
 from ..database import get_db
-from ..models import Reminder, TaskStatus
+from ..models import Reminder, TaskStatus, ReminderResponse
 from ..services.user_service import get_or_create_default_user
 from ..services.reminder_service import (
     create_reminder_from_text,
@@ -22,7 +22,7 @@ from ..services.reminder_service import (
     get_upcoming_reminders
 )
 
-router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
